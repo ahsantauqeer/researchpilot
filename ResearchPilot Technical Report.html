@@ -1,0 +1,625 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>ResearchPilot Technical Report</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: technical report. Sticky contents rail + 68ch reading column; figures break wider. Matches the app: ink, cyan signal, magenta for limits. */
+:root {
+  --bg: #F5F7F9;
+  --surface: #FFFFFF;
+  --ink: #0D1520;
+  --text: #2A3542;
+  --muted: #5F6C7A;
+  --line: #D9E1E8;
+  --accent: #00788C;
+  --accent-soft: rgba(0, 120, 140, 0.08);
+  --accent-line: rgba(0, 120, 140, 0.35);
+  --limit: #B0154F;
+  --limit-soft: rgba(176, 21, 79, 0.06);
+  --grid: rgba(0, 120, 140, 0.05);
+  --f-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --f-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  --measure: 68ch;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #07090D; --surface: #0C1016; --ink: #E8EEF4; --text: #C3CCD5; --muted: #7D8A98;
+    --line: #1C2531; --accent: #00E5FF; --accent-soft: rgba(0, 229, 255, 0.07); --accent-line: rgba(0, 229, 255, 0.35);
+    --limit: #FF4D97; --limit-soft: rgba(255, 46, 136, 0.07); --grid: rgba(0, 229, 255, 0.035);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #07090D; --surface: #0C1016; --ink: #E8EEF4; --text: #C3CCD5; --muted: #7D8A98;
+  --line: #1C2531; --accent: #00E5FF; --accent-soft: rgba(0, 229, 255, 0.07); --accent-line: rgba(0, 229, 255, 0.35);
+  --limit: #FF4D97; --limit-soft: rgba(255, 46, 136, 0.07); --grid: rgba(0, 229, 255, 0.035);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15.5px/1.7 var(--f-body);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 56px; padding-block: 56px 96px; }
+@media (max-width: 1000px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding-block: 32px 64px; } .toc { display: none; } }
+
+/* contents rail */
+.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 32px); align-self: start; font: 12px/1.5 var(--f-mono); }
+.toc .lbl { color: var(--accent); letter-spacing: .2em; text-transform: uppercase; font-size: 10.5px; margin-bottom: 12px; }
+.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; counter-reset: s; }
+.toc li { counter-increment: s; }
+.toc a { color: var(--muted); text-decoration: none; display: flex; gap: 10px; }
+.toc a::before { content: counter(s, decimal-leading-zero); color: var(--line); }
+.toc a:hover, .toc a:focus-visible { color: var(--accent); outline: none; }
+
+main { min-width: 0; }
+main > * { max-width: var(--measure); }
+main > .wide, main > header { max-width: none; }
+
+/* header */
+header { border-bottom: 1px solid var(--line); padding-bottom: 32px; margin-bottom: 8px; }
+.eyebrow { font: 11px/1 var(--f-mono); letter-spacing: .22em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(44px, 7vw, 76px)/0.98 var(--f-display); letter-spacing: -0.035em; color: var(--ink); margin: 18px 0 14px; }
+.dek { font: 400 clamp(18px, 2.2vw, 22px)/1.45 var(--f-display); color: var(--text); max-width: 34ch; margin: 0 0 28px; text-wrap: balance; }
+.meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 18px 28px; font-size: 13.5px; }
+.meta dt { font: 10.5px/1 var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.meta dd { margin: 0; color: var(--ink); }
+.meta a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-line); }
+.status { display: inline-flex; align-items: center; gap: 8px; }
+.status::before { content: ""; width: 7px; height: 7px; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+
+/* facts strip */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); border: 1px solid var(--line); background: var(--surface); margin: 32px 0 8px; }
+.facts div { padding: 16px 18px; border-right: 1px solid var(--line); }
+.facts div:last-child { border-right: none; }
+.facts b { display: block; font: 600 24px/1.1 var(--f-display); color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.facts span { font: 11px/1.4 var(--f-mono); color: var(--muted); letter-spacing: .03em; }
+@media (max-width: 640px) { .facts div { border-right: none; border-bottom: 1px solid var(--line); } .facts div:last-child { border-bottom: none; } }
+
+/* sections */
+section { padding-top: 56px; }
+h2 { font: 600 30px/1.15 var(--f-display); letter-spacing: -0.02em; color: var(--ink); margin: 0 0 18px; display: flex; gap: 14px; align-items: baseline; text-wrap: balance; }
+h2 .n { font: 500 12px/1 var(--f-mono); color: var(--accent); letter-spacing: .1em; }
+h3 { font: 600 18px/1.3 var(--f-display); color: var(--ink); margin: 30px 0 10px; letter-spacing: -0.01em; }
+p { margin: 0 0 14px; }
+strong { color: var(--ink); font-weight: 600; }
+code { font: 0.86em var(--f-mono); color: var(--ink); background: var(--accent-soft); padding: 1px 5px; }
+ul.plain { margin: 0 0 14px; padding-left: 18px; }
+ul.plain li { margin-bottom: 6px; }
+ul.plain li::marker { color: var(--accent); }
+a { color: var(--accent); }
+
+.lead { font-size: 17.5px; line-height: 1.65; color: var(--ink); }
+
+/* callouts */
+.note { border-left: 2px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; margin: 18px 0; font-size: 14.5px; }
+.note.limit { border-left-color: var(--limit); background: var(--limit-soft); }
+.note .k { font: 10.5px/1 var(--f-mono); letter-spacing: .18em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 6px; }
+.note.limit .k { color: var(--limit); }
+
+/* tables */
+.tbl { overflow-x: auto; margin: 18px 0 22px; border: 1px solid var(--line); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; line-height: 1.5; }
+th { text-align: left; font: 500 10.5px/1.3 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 11px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+td.m, td code { font-family: var(--f-mono); font-size: 12.5px; }
+td.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; color: var(--ink); }
+td.tbd { font-family: var(--f-mono); color: var(--muted); }
+
+/* pipelines (architecture) */
+.fig { margin: 22px 0 26px; }
+.fig figcaption { font: 11.5px/1.5 var(--f-mono); color: var(--muted); margin-top: 10px; }
+.lane { border: 1px solid var(--line); background: var(--surface); padding: 16px 18px 18px; }
+.lane + .lane { border-top: none; }
+.lane .lbl { font: 10.5px/1 var(--f-mono); letter-spacing: .2em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.pipe { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.pipe .st { flex: 1 1 110px; border: 1px solid var(--line); padding: 9px 11px; background: var(--bg); }
+.pipe .st b { display: block; font: 600 13.5px/1.25 var(--f-display); color: var(--ink); }
+.pipe .st span { font: 11px/1.4 var(--f-mono); color: var(--muted); }
+.pipe .st.hl { border-color: var(--accent-line); box-shadow: inset 0 0 0 1px var(--accent-soft); }
+.pipe .ar { align-self: center; color: var(--accent); font: 14px var(--f-mono); }
+@media (max-width: 640px) { .pipe .ar { display: none; } }
+
+/* svg diagram */
+.svgbox { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); padding: 14px; }
+.svgbox svg { display: block; min-width: 760px; width: 100%; height: auto; }
+.g-box { fill: var(--bg); stroke: var(--line); stroke-width: 1; }
+.g-box.hl { stroke: var(--accent); }
+.g-box.end { fill: var(--surface); stroke-dasharray: 3 3; }
+.g-t { fill: var(--ink); font: 600 14px var(--f-display); }
+.g-s { fill: var(--muted); font: 10.5px var(--f-mono); }
+.g-l { stroke: var(--muted); stroke-width: 1.2; fill: none; }
+.g-l.acc { stroke: var(--accent); }
+.g-head { fill: var(--muted); }
+.g-head.acc { fill: var(--accent); }
+.g-cap { fill: var(--accent); font: 10.5px var(--f-mono); }
+
+/* gantt chart */
+.gantt { border: 1px solid var(--line); background: var(--surface); padding: 18px 18px 12px; }
+.g-row { display: grid; grid-template-columns: 118px minmax(0, 1fr) 64px; align-items: center; gap: 12px; height: 30px; }
+.g-row .nm { font: 11.5px var(--f-mono); color: var(--ink); text-transform: uppercase; letter-spacing: .06em; }
+.g-row .tr { position: relative; height: 100%; }
+.g-row .tr::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: calc(60 / 279 * 100%) 100%; opacity: .7; }
+.g-row .bar { position: absolute; top: 8px; bottom: 8px; background: var(--accent); min-width: 2px; }
+.g-row .bar.io { background: var(--muted); }
+.g-row .du { font: 11.5px var(--f-mono); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.g-axis { display: grid; grid-template-columns: 118px minmax(0, 1fr) 64px; gap: 12px; margin-top: 6px; }
+.g-axis .sc { position: relative; height: 16px; font: 10.5px var(--f-mono); color: var(--muted); }
+.g-axis .sc span { position: absolute; transform: translateX(-50%); }
+.g-axis .sc span:first-child { transform: none; }
+.g-axis .sc span:last-child { transform: translateX(-100%); color: var(--ink); }
+.g-key { display: flex; gap: 18px; flex-wrap: wrap; font: 11px var(--f-mono); color: var(--muted); margin-top: 10px; }
+.g-key i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; background: var(--accent); }
+.g-key i.io { background: var(--muted); }
+
+/* compare pair */
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0; border: 1px solid var(--line); background: var(--surface); margin: 18px 0; }
+.pair > div { padding: 16px 18px; border-right: 1px solid var(--line); }
+.pair > div:last-child { border-right: none; }
+.pair .k { font: 10.5px/1 var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; display: block; }
+.pair .row { display: grid; grid-template-columns: 74px minmax(0, 1fr) 70px; gap: 10px; align-items: center; font: 11.5px var(--f-mono); color: var(--muted); margin-bottom: 8px; }
+.pair .row .b { height: 10px; background: var(--muted); }
+.pair .row.after .b { background: var(--accent); }
+.pair .row .v { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) { .pair > div { border-right: none; border-bottom: 1px solid var(--line); } }
+
+/* quoted answer */
+.answer { border: 1px solid var(--line); background: var(--surface); padding: 16px 18px; margin: 16px 0; font-size: 14.5px; }
+.answer .q { font: 11px/1.5 var(--f-mono); color: var(--muted); margin-bottom: 8px; }
+.answer .src { font: 11.5px/1.7 var(--f-mono); color: var(--muted); margin-top: 10px; }
+.answer .src b { color: var(--accent); font-weight: 500; }
+
+/* timeline (process) */
+.log { border-left: 1px solid var(--line); margin: 18px 0 8px 6px; padding-left: 22px; display: grid; gap: 16px; }
+.log > div { position: relative; }
+.log > div::before { content: ""; position: absolute; left: -26.5px; top: 8px; width: 8px; height: 8px; background: var(--bg); border: 1px solid var(--accent); }
+.log b { color: var(--ink); font-family: var(--f-display); font-weight: 600; }
+.log .t { font: 10.5px var(--f-mono); color: var(--accent); letter-spacing: .12em; text-transform: uppercase; display: block; }
+
+/* limits grid */
+.lims { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0; border: 1px solid var(--line); background: var(--surface); margin: 18px 0; }
+.lims > div { padding: 14px 16px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); font-size: 14px; }
+.lims b { display: block; color: var(--ink); font: 600 14.5px/1.35 var(--f-display); margin-bottom: 4px; }
+.lims .sev { font: 10px/1 var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--limit); display: block; margin-bottom: 7px; }
+.lims .sev.lo { color: var(--muted); }
+
+footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); font: 11.5px/1.7 var(--f-mono); color: var(--muted); max-width: none !important; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+
+/* print / PDF: light, no rail, no grid */
+@page { size: A4; margin: 16mm 15mm 18mm; }
+@media print {
+  :root, :root[data-theme="dark"], :root:not([data-theme="light"]) {
+    --bg: #FFFFFF; --surface: #FFFFFF; --ink: #0D1520; --text: #2A3542; --muted: #5F6C7A; --line: #D9E1E8;
+    --accent: #00788C; --accent-soft: rgba(0, 120, 140, 0.07); --accent-line: rgba(0, 120, 140, 0.35);
+    --limit: #B0154F; --limit-soft: rgba(176, 21, 79, 0.05); --grid: transparent; color-scheme: light;
+  }
+  body { background: #fff; font-size: 10.5pt; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .wrap { display: block; padding: 0; max-width: none; }
+  .toc { display: none; }
+  main > * { max-width: none; }
+  header { padding-top: 6mm; }
+  section { padding-top: 26px; }
+  h2 { break-after: avoid; }
+  h3 { break-after: avoid; }
+  .fig, .tbl, .gantt, .pair, .answer, .note, .lims > div, .lane, .svgbox, .facts { break-inside: avoid; }
+  .svgbox svg { min-width: 0; }
+  .status::before { box-shadow: none; }
+  a { text-decoration: none; }
+}
+</style>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Contents">
+    <div class="lbl">Contents</div>
+    <ol>
+      <li><a href="#summary">Summary</a></li>
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#ingestion">Ingestion</a></li>
+      <li><a href="#retrieval">Retrieval</a></li>
+      <li><a href="#agent">Agent loop</a></li>
+      <li><a href="#citations">Citations</a></li>
+      <li><a href="#security">Security</a></li>
+      <li><a href="#interface">API and interface</a></li>
+      <li><a href="#observability">Observability</a></li>
+      <li><a href="#engineering">Engineering</a></li>
+      <li><a href="#build">How it was built</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#evaluation">Evaluation plan</a></li>
+      <li><a href="#limitations">Limitations</a></li>
+      <li><a href="#next">Next steps</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header>
+      <div class="eyebrow">Technical report &middot; November 2026 &middot; v0.1</div>
+      <h1>ResearchPilot</h1>
+      <p class="dek">An agentic research assistant that searches your PDFs in rounds, decides when the evidence is enough, and cites a file and page for every claim.</p>
+      <dl class="meta">
+        <div><dt>Author</dt><dd>ahsantauqeer</dd></div>
+        <div><dt>Repository</dt><dd><a href="https://github.com/ahsantauqeer/researchpilot">github.com/ahsantauqeer/researchpilot</a></dd></div>
+        <div><dt>Status</dt><dd class="status">Built, tested, running locally</dd></div>
+        <div><dt>Stack</dt><dd>Python 3.11, FastAPI, LangGraph, Qdrant, Sentence Transformers, Ollama, Streamlit, LangSmith</dd></div>
+      </dl>
+      <div class="facts" role="list">
+        <div role="listitem"><b>44 / 44</b><span>unit and API tests passing (1 live test skipped by design)</span></div>
+        <div role="listitem"><b>5</b><span>LLM calls in an observed 2-round agent run</span></div>
+        <div role="listitem"><b>279 s</b><span>end-to-end on a CPU-only laptop, local 4B model</span></div>
+        <div role="listitem"><b>18.7&times;</b><span>fewer output tokens per call after disabling model thinking</span></div>
+      </div>
+    </header>
+
+    <section id="summary">
+      <h2><span class="n">01</span>Summary</h2>
+      <p class="lead">ResearchPilot answers questions across a set of uploaded PDFs. Instead of searching once, it plans focused queries, retrieves passages, asks a model whether the evidence actually covers the question, and searches again for the missing parts within a fixed budget. The final answer may only cite passages the system retrieved, and code rejects any citation that does not map to one.</p>
+      <p>The full MVP from the design guide is implemented: ingestion with page-level metadata, dense and hybrid retrieval with optional reranking, a bounded LangGraph agent, programmatic citation checks, abstention when evidence is missing, prompt-injection defences, a FastAPI service with streaming progress, a Streamlit interface with a source PDF viewer, LangSmith tracing, and an evaluation harness that compares six system variants.</p>
+      <p>It runs entirely on a laptop with a local open model (<code>qwen3.5:4b</code> through Ollama), with no paid API required. The comparative evaluation has been built but not yet run on a question set, so this report claims no accuracy numbers. Section 13 lists what was measured during development; section 14 describes the evaluation that will produce the headline results.</p>
+    </section>
+
+    <section id="problem">
+      <h2><span class="n">02</span>The problem</h2>
+      <p>People reviewing research papers often ask questions that span documents: compare two methods, explain a trade-off, find where a claim is supported. A basic retrieval-augmented generation (RAG) pipeline embeds the question once, takes the top few passages, and asks a model to answer. When the evidence is spread across papers or phrased in different terms, that single search misses part of it, and the model still produces a confident answer.</p>
+      <p>ResearchPilot targets three failures of that baseline:</p>
+      <ul class="plain">
+        <li><strong>Incomplete evidence.</strong> One query cannot cover a multi-part question. The agent decomposes the question and searches again for what is missing.</li>
+        <li><strong>Untraceable claims.</strong> Answers must cite a filename and page, and those citations are checked in code rather than trusted.</li>
+        <li><strong>False confidence.</strong> When the documents do not contain the answer, the system says so instead of filling the gap from the model's general knowledge.</li>
+      </ul>
+    </section>
+
+    <section id="architecture">
+      <h2><span class="n">03</span>Architecture</h2>
+      <p>Two paths share one vector store. Ingestion runs once per upload; the query path runs for every question. The same embedding model is used on both paths, and the store refuses to mix models in one collection.</p>
+      <figure class="fig wide">
+        <div class="lane">
+          <div class="lbl">Ingestion path &middot; every upload</div>
+          <div class="pipe">
+            <div class="st"><b>Validate</b><span>extension, %PDF- header, 25 MB cap</span></div><span class="ar" aria-hidden="true">&rarr;</span>
+            <div class="st"><b>Extract</b><span>text per page, 1-based pages</span></div><span class="ar" aria-hidden="true">&rarr;</span>
+            <div class="st"><b>Clean</b><span>headers, footers, references</span></div><span class="ar" aria-hidden="true">&rarr;</span>
+            <div class="st"><b>Chunk</b><span>800 chars, 150 overlap</span></div><span class="ar" aria-hidden="true">&rarr;</span>
+            <div class="st"><b>Embed</b><span>MiniLM-L6, 384-d</span></div><span class="ar" aria-hidden="true">&rarr;</span>
+            <div class="st hl"><b>Qdrant</b><span>embedded, on disk</span></div>
+          </div>
+        </div>
+        <div class="lane">
+          <div class="lbl">Query path &middot; every question</div>
+          <div class="pipe">
+            <div class="st"><b>Question</b><span>optional document scope</span></div><span class="ar" aria-hidden="true">&rarr;</span>
+            <div class="st hl"><b>Agent</b><span>plan, retrieve, evaluate, refine</span></div><span class="ar" aria-hidden="true">&rarr;</span>
+            <div class="st"><b>Retrieval</b><span>dense + BM25, RRF, rerank</span></div><span class="ar" aria-hidden="true">&rarr;</span>
+            <div class="st"><b>Answer</b><span>labelled evidence only</span></div><span class="ar" aria-hidden="true">&rarr;</span>
+            <div class="st"><b>Verify</b><span>citations checked in code</span></div><span class="ar" aria-hidden="true">&rarr;</span>
+            <div class="st"><b>Response</b><span>answer, sources, trace link</span></div>
+          </div>
+        </div>
+        <figcaption>Fig. 1. The LLM is used only inside the agent and answer steps. Retrieval, verification and rendering of citations are deterministic code.</figcaption>
+      </figure>
+      <div class="tbl wide">
+        <table>
+          <thead><tr><th>Layer</th><th>Technology</th><th>Role in ResearchPilot</th></tr></thead>
+          <tbody>
+            <tr><td>API</td><td class="m">FastAPI + Pydantic</td><td>Typed endpoints for upload, ask, streaming ask, documents, health</td></tr>
+            <tr><td>Orchestration</td><td class="m">LangGraph</td><td>State graph with a conditional loop and a hard round limit</td></tr>
+            <tr><td>Vector store</td><td class="m">Qdrant (embedded)</td><td>Vectors plus payload; filters by document; persists to disk, no Docker</td></tr>
+            <tr><td>Embeddings</td><td class="m">all-MiniLM-L6-v2</td><td>Local Sentence Transformers model for chunks and queries</td></tr>
+            <tr><td>Keyword search</td><td class="m">BM25 (rank-bm25)</td><td>Exact terms: acronyms, model names, identifiers</td></tr>
+            <tr><td>Reranker</td><td class="m">ms-marco-MiniLM-L-6-v2</td><td>Optional cross-encoder that re-scores about 20 candidates</td></tr>
+            <tr><td>LLM</td><td class="m">qwen3.5:4b via Ollama</td><td>Planning, evidence judgement, query rewriting, cited answers</td></tr>
+            <tr><td>Interface</td><td class="m">Streamlit</td><td>Upload, live agent progress, cited answers, PDF viewer</td></tr>
+            <tr><td>Tracing</td><td class="m">LangSmith</td><td>Per-step and per-LLM-call traces with prompts, tokens, latency</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="ingestion">
+      <h2><span class="n">04</span>Ingestion</h2>
+      <p>Uploads are treated as untrusted input. Each file is checked for a <code>.pdf</code> name, a real <code>%PDF-</code> header and a size limit before any parsing. Text is extracted page by page so every chunk knows its page, and page numbers are converted to 1-based values once, at the source, so citations always match what a reader sees.</p>
+      <h3>Cleaning</h3>
+      <ul class="plain">
+        <li><strong>Running headers and footers</strong> are detected as lines that repeat at the top or bottom of at least half the pages, after normalising digits so that "Page 3" and "Page 4" match.</li>
+        <li><strong>The reference list</strong> is cut when a "References" or "Bibliography" heading appears in the second half of the document. Reference lists cause false keyword matches.</li>
+        <li><strong>Hyphenated line breaks</strong> are rejoined and whitespace is normalised.</li>
+      </ul>
+      <h3>Identity and idempotency</h3>
+      <p>The <code>document_id</code> is the first 16 hex characters of the file's SHA-256 hash, and each <code>chunk_id</code> is derived from the document, page and chunk index. Uploading the same bytes twice therefore produces the same IDs and is detected as a duplicate, which keeps the index clean and makes evaluation runs reproducible.</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Payload field</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td class="m">document_id, chunk_id</td><td>Stable identity; filtering; deduplication</td></tr>
+            <tr><td class="m">filename, page</td><td>Rendered citations (never taken from model output)</td></tr>
+            <tr><td class="m">chunk_index, text</td><td>Evidence given to the model; snippets in the UI</td></tr>
+            <tr><td class="m">content_hash, embedding_model</td><td>Duplicate detection; guard against mixing embedding models</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="retrieval">
+      <h2><span class="n">05</span>Retrieval</h2>
+      <p>Retrieval is built as switches so that each improvement can be measured on its own. The design rule from the project guide is to add one change at a time; if hybrid search, reranking and the agent loop were introduced together, no result could be attributed to any of them.</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Stage</th><th>Method</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Dense</td><td>Cosine search over MiniLM embeddings, top-k = 5</td><td>Matches meaning across different wording</td></tr>
+            <tr><td>Hybrid</td><td>BM25 over the same chunks, fused with reciprocal rank fusion (k = 60)</td><td>Technical text depends on exact names and acronyms</td></tr>
+            <tr><td>Per-document</td><td>Top-k inside each document for comparison questions</td><td>One long paper cannot crowd out the others</td></tr>
+            <tr><td>Rerank</td><td>Cross-encoder over about 20 candidates, keep 5</td><td>Better ordering of the passages the model sees</td></tr>
+            <tr><td>Deduplicate</td><td>By <code>chunk_id</code>, keeping the best score</td><td>Several queries often return the same chunk</td></tr>
+            <tr><td>Package</td><td>Label each kept chunk S1, S2, &hellip; with file and page</td><td>Gives the model a closed set of citable sources</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The keyword index is built in process from the stored chunks and rebuilt whenever the store changes, which a version counter on the store signals. This is simple to reason about and adequate for a personal library of hundreds of papers; section 15 notes where it stops scaling.</p>
+    </section>
+
+    <section id="agent">
+      <h2><span class="n">06</span>The agent loop</h2>
+      <p>The agent is a LangGraph state machine with five steps. The only loop goes through <code>refine</code>, and the router checks the round counter before every refine, so the number of retrieval rounds cannot exceed <code>MAX_ROUNDS</code>. LangGraph's recursion limit is set as a second guard.</p>
+      <figure class="fig wide">
+        <div class="svgbox">
+          <svg viewBox="0 0 860 230" role="img" aria-label="Agent graph: start, plan, retrieve, evaluate, then answer and end; evaluate loops through refine back to retrieve when evidence is insufficient and rounds remain.">
+            <defs>
+              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="g-head" d="M0,0 L10,5 L0,10 z"/></marker>
+              <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="g-head acc" d="M0,0 L10,5 L0,10 z"/></marker>
+            </defs>
+            <rect class="g-box end" x="10" y="50" width="76" height="48"/><text class="g-s" x="48" y="78" text-anchor="middle">START</text>
+            <rect class="g-box" x="126" y="50" width="112" height="48"/><text class="g-t" x="182" y="72" text-anchor="middle">plan</text><text class="g-s" x="182" y="89" text-anchor="middle">&le; 3 queries</text>
+            <rect class="g-box" x="278" y="50" width="124" height="48"/><text class="g-t" x="340" y="72" text-anchor="middle">retrieve</text><text class="g-s" x="340" y="89" text-anchor="middle">round += 1</text>
+            <rect class="g-box hl" x="442" y="50" width="124" height="48"/><text class="g-t" x="504" y="72" text-anchor="middle">evaluate</text><text class="g-s" x="504" y="89" text-anchor="middle">schema verdict</text>
+            <rect class="g-box" x="626" y="50" width="120" height="48"/><text class="g-t" x="686" y="72" text-anchor="middle">answer</text><text class="g-s" x="686" y="89" text-anchor="middle">cite + verify</text>
+            <rect class="g-box end" x="776" y="50" width="74" height="48"/><text class="g-s" x="813" y="78" text-anchor="middle">END</text>
+            <rect class="g-box" x="368" y="160" width="124" height="48"/><text class="g-t" x="430" y="182" text-anchor="middle">refine</text><text class="g-s" x="430" y="199" text-anchor="middle">target the gaps</text>
+            <path class="g-l" d="M86,74 H124" marker-end="url(#ah)"/>
+            <path class="g-l" d="M238,74 H276" marker-end="url(#ah)"/>
+            <path class="g-l" d="M402,74 H440" marker-end="url(#ah)"/>
+            <path class="g-l" d="M566,74 H624" marker-end="url(#ah)"/>
+            <path class="g-l" d="M746,74 H774" marker-end="url(#ah)"/>
+            <path class="g-l acc" d="M530,98 V184 H494" marker-end="url(#aha)"/>
+            <path class="g-l acc" d="M368,184 H340 V100" marker-end="url(#aha)"/>
+            <text class="g-cap" x="542" y="140">insufficient and round &lt; max</text>
+            <text class="g-s" x="596" y="38" text-anchor="middle">sufficient, or max rounds reached</text>
+          </svg>
+        </div>
+        <figcaption>Fig. 2. The bounded loop. When the limit is reached without sufficient evidence, the answer step runs anyway and appends an explicit limitation statement.</figcaption>
+      </figure>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Step</th><th>Does</th><th>On bad model output</th></tr></thead>
+          <tbody>
+            <tr><td class="m">plan</td><td>Writes up to 3 focused queries; flags comparison questions, which switches retrieval to per-document</td><td>Falls back to the raw question</td></tr>
+            <tr><td class="m">retrieve</td><td>Runs every query, merges with earlier evidence, keeps passages the evaluator marked relevant when over the context budget</td><td>Not an LLM step</td></tr>
+            <tr><td class="m">evaluate</td><td>Returns <code>{sufficient, missing_information, relevant_source_ids, confidence}</code>, validated by Pydantic</td><td>Counted as insufficient, never as success</td></tr>
+            <tr><td class="m">refine</td><td>Writes new queries aimed at the listed gaps and filters out queries already tried</td><td>Searches for the missing facts directly</td></tr>
+            <tr><td class="m">answer</td><td>Writes a structured answer from labelled evidence only</td><td>One retry, then a clear failure message</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Empty retrieval skips the evaluator and the answer model entirely and returns a fixed statement that the indexed documents do not contain enough evidence. Planning, evaluation and refinement can run on a cheaper model than the final answer through a separate setting.</p>
+    </section>
+
+    <section id="citations">
+      <h2><span class="n">07</span>Citations and abstention</h2>
+      <p>The model receives each passage with a label such as <code>[S3]</code> and must return JSON containing the answer text and a list of claims, each with the labels that support it. Code then enforces the rules:</p>
+      <ul class="plain">
+        <li>Every cited label must exist in the retrieved set. Unknown labels trigger one regeneration with a correction message; if they persist, they are stripped from the text and the claims.</li>
+        <li>Filenames and page numbers in the response come from stored metadata. Text the model writes about files or pages is never used.</li>
+        <li>An answer with no valid citation is marked as unverified in the response.</li>
+        <li>When the model cites only through the claims list, the claims and their sources are appended to the answer so every statement stays traceable.</li>
+      </ul>
+      <div class="note"><span class="k">What this guarantees</span>A test can assert that no response ever cites a passage that was not retrieved. It does not guarantee that a cited passage truly supports its claim; that needs the claim-verification step and the citation-correctness metric planned in sections 14 and 16.</div>
+    </section>
+
+    <section id="security">
+      <h2><span class="n">08</span>Security</h2>
+      <p>Document text is untrusted. A PDF can contain instructions aimed at the model, so the system limits what such text can reach.</p>
+      <ul class="plain">
+        <li>Document text appears only in the user message, inside <code>&lt;evidence&gt;</code> tags, never in the system prompt. Any <code>&lt;/evidence&gt;</code> written inside a document is escaped, so a document cannot close the block early.</li>
+        <li>Every system prompt states that evidence is data and must not be followed as instructions.</li>
+        <li>The agent has no tools: no shell, no web access, no code execution. Its only actions are fixed graph steps.</li>
+        <li>The test suite includes an adversarial PDF that demands the model reply "PWNED", cite a fake source and reveal its prompt. Tests assert the structural defences and that the fake citation is rejected. A live test against the real model is included and runs on demand.</li>
+        <li>Secrets live only in <code>.env</code>, which is excluded from version control. The PDF endpoint validates the document ID format, which also blocks path traversal.</li>
+      </ul>
+    </section>
+
+    <section id="interface">
+      <h2><span class="n">09</span>API and interface</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Endpoint</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td class="m">GET /health</td><td>Readiness: store reachable, model configured, tracing state</td></tr>
+            <tr><td class="m">POST /upload</td><td>Validate and index a PDF; returns document ID, pages, chunks, duplicate flag</td></tr>
+            <tr><td class="m">POST /ask</td><td>Answer with sources, retrieval rounds, optional trace and LangSmith link</td></tr>
+            <tr><td class="m">POST /ask/stream</td><td>Server-sent events: one progress event per agent step, then the result</td></tr>
+            <tr><td class="m">GET /documents</td><td>List indexed documents with page and chunk counts</td></tr>
+            <tr><td class="m">GET /documents/{id}/pdf</td><td>Serve the stored PDF inline for the page viewer</td></tr>
+            <tr><td class="m">DELETE /documents/{id}</td><td>Remove a document's chunks and its stored PDF</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Each question is answered independently. The API is stateless by design for the MVP, which the guide flagged as a decision to make early; follow-up questions that refer to earlier answers are out of scope.</p>
+      <p>The Streamlit interface uses a dark, minimal visual language built around one cyan signal colour. It shows each agent step live with elapsed time, renders citations as chips that link to source cards, opens the original PDF at the cited page beside the answer, keeps a session history, and links each answer to its LangSmith trace.</p>
+    </section>
+
+    <section id="observability">
+      <h2><span class="n">10</span>Observability</h2>
+      <p>LangSmith tracing is optional and off by default. When enabled, each question appears as one run named "ResearchPilot agent", tagged with the model and retrieval settings. Each graph step is a child span, and every model call is recorded under the step that made it, with the full prompt, the JSON output, token counts and latency. Evaluation runs are tagged by system and question ID so a single variant can be filtered.</p>
+      <p>Tracing is set up so it cannot break the app: if the library fails, the client falls back to an untraced one. Because traces contain document passages, the report and the README both note that tracing should be turned off before querying personal documents.</p>
+      <div class="note"><span class="k">Used in practice</span>The first traced run exposed a real defect. The answer model had turned an internal instruction ("the search budget is exhausted") into one of its claims and cited sources for it. The prompt was reworded so the instruction is marked as not evidence, and the limitation note is now added by code instead.</div>
+    </section>
+
+    <section id="engineering">
+      <h2><span class="n">11</span>Engineering</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Test file</th><th>Covers</th><th>Tests</th></tr></thead>
+          <tbody>
+            <tr><td class="m">test_ingestion.py</td><td>Validation, 1-based pages, deterministic IDs, overlap, cleaning, duplicates, delete</td><td class="num">7</td></tr>
+            <tr><td class="m">test_retrieval.py</td><td>Tokenizer, RRF, dense, filters, hybrid exact match, per-document, index refresh, rerank, dedupe</td><td class="num">9</td></tr>
+            <tr><td class="m">test_agent.py</td><td>Round limit, retry then stop, empty index, malformed output, comparison routing, citation repair</td><td class="num">12</td></tr>
+            <tr><td class="m">test_api.py</td><td>Upload, ask, stream, delete, PDF viewer endpoint, error codes</td><td class="num">8</td></tr>
+            <tr><td class="m">test_security.py</td><td>Injection PDF, delimiter escaping, fake citation, no tools; live test on demand</td><td class="num">3 + 1</td></tr>
+            <tr><td class="m">test_tracing.py</td><td>Off by default, no key means off, environment export, safe wrapping</td><td class="num">5</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Unit tests use a scripted fake LLM and a deterministic hashed-bag-of-words embedder, so the suite runs offline in under 20 seconds with no API key or model download. Test PDFs are generated by a small writer in the test fixtures. Linting uses Ruff. Dependency versions are pinned in <code>requirements.lock.txt</code>.</p>
+      <p>The LLM sits behind a thin interface that speaks the OpenAI-compatible protocol, so one setting switches between OpenAI, Ollama's cloud API and a local Ollama server. Every LLM output is parsed into a Pydantic schema, and malformed output raises a dedicated error that each step handles explicitly.</p>
+    </section>
+
+    <section id="build">
+      <h2><span class="n">12</span>How it was built</h2>
+      <p>The project followed the milestone order in the design guide: foundations and tests first, then providers, then observability and the interface. The log below records decisions and problems as they happened.</p>
+      <div class="log">
+        <div><span class="t">Core system</span><b>MVP implemented and tested offline.</b> Ingestion, retrieval, agent, citation checks, API, UI and evaluation harness, with 35 tests passing on the first run. A smoke test with the real embedding model, reranker and on-disk Qdrant confirmed persistence across restarts.</div>
+        <div><span class="t">Cloud provider</span><b>Ollama cloud integrated, blocked by billing.</b> The request reached Ollama and authenticated, then returned HTTP 402 because the account had no usage credits. The provider remains available as a setting.</div>
+        <div><span class="t">Local model</span><b>Switched to a local qwen3.5:4b.</b> Requests to <code>localhost</code> timed out because Windows resolved it to IPv6 while Ollama listened on IPv4; using <code>127.0.0.1</code> fixed it. The model ran 100% on CPU with a 4,096-token context.</div>
+        <div><span class="t">Performance</span><b>Disabled hidden reasoning.</b> A single call took 497 s and produced 824 output tokens for one sentence. Setting <code>reasoning_effort</code> to <code>none</code> cut that call to 28 s and 44 tokens. Context was reduced to 6 passages and 2 rounds to fit the window.</div>
+        <div><span class="t">End to end</span><b>First real agent run.</b> The agent judged its first evidence insufficient, rewrote its queries toward the gap, and answered correctly on the second round. The model cited only through the claims list, which led to the claims-as-evidence rendering.</div>
+        <div><span class="t">Tracing</span><b>LangSmith added and used to find a defect.</b> The first trace showed the prompt-leak issue described in section 10, which was then fixed.</div>
+        <div><span class="t">Interface</span><b>Redesigned UI with a source viewer.</b> PDFs are now stored on upload so the viewer can open the cited page. Deletion asks for confirmation.</div>
+        <div><span class="t">Delivery</span><b>Published to a private GitHub repository.</b> A pre-commit check confirmed that no keys, PDFs or index files were included.</div>
+      </div>
+    </section>
+
+    <section id="results">
+      <h2><span class="n">13</span>Results</h2>
+      <div class="note limit"><span class="k">Scope of these numbers</span>Everything below was observed during development on one laptop, mostly on single runs. These are engineering observations, not an evaluation. They show the system works end to end and where its time goes; they say nothing yet about answer quality relative to simpler baselines.</div>
+
+      <h3>Where the time goes in one agent run</h3>
+      <p>Question: "What retrieval methods does ResearchPilot use, and how does the agent decide when to stop searching?" over two indexed documents (21 pages, 81 chunks). The run took two rounds and five model calls, with 4,779 prompt tokens and 560 completion tokens.</p>
+      <figure class="fig wide">
+        <div class="gantt" role="img" aria-label="Timeline of one agent run, 279 seconds: plan 0 to 43 s, retrieve 43 to 47, evaluate 47 to 110, refine 110 to 130, retrieve 130 to 131, evaluate 131 to 180, answer 180 to 279.">
+          <div class="g-row"><span class="nm">plan</span><span class="tr"><span class="bar" style="left:0%;width:15.41%"></span></span><span class="du">43 s</span></div>
+          <div class="g-row"><span class="nm">retrieve 1</span><span class="tr"><span class="bar io" style="left:15.41%;width:1.43%"></span></span><span class="du">4 s</span></div>
+          <div class="g-row"><span class="nm">evaluate 1</span><span class="tr"><span class="bar" style="left:16.85%;width:22.58%"></span></span><span class="du">63 s</span></div>
+          <div class="g-row"><span class="nm">refine</span><span class="tr"><span class="bar" style="left:39.43%;width:7.17%"></span></span><span class="du">20 s</span></div>
+          <div class="g-row"><span class="nm">retrieve 2</span><span class="tr"><span class="bar io" style="left:46.59%;width:0.36%"></span></span><span class="du">1 s</span></div>
+          <div class="g-row"><span class="nm">evaluate 2</span><span class="tr"><span class="bar" style="left:46.95%;width:17.56%"></span></span><span class="du">49 s</span></div>
+          <div class="g-row"><span class="nm">answer</span><span class="tr"><span class="bar" style="left:64.52%;width:35.48%"></span></span><span class="du">99 s</span></div>
+          <div class="g-axis" aria-hidden="true"><span></span><span class="sc"><span style="left:0%">0</span><span style="left:21.51%">60</span><span style="left:43.01%">120</span><span style="left:64.52%">180</span><span style="left:86.02%">240</span><span style="left:100%">279 s</span></span><span></span></div>
+          <div class="g-key"><span><i></i>LLM step</span><span><i class="io"></i>retrieval (embedding, Qdrant, BM25)</span></div>
+        </div>
+        <figcaption>Fig. 3. Retrieval took 5 s of 279 s. Model calls account for about 98% of latency, so a faster model or a GPU, not retrieval tuning, is the lever for speed.</figcaption>
+      </figure>
+      <div class="answer">
+        <div class="q">Answer returned (2 rounds, 279 s)</div>
+        ResearchPilot uses Retrieval-Augmented Generation (RAG) with a hybrid search approach that includes chunking, initial retrieval, optional cross-encoder re-scoring, and query planning/decomposition. The agent decides when to stop searching based on an evidence evaluation step where an LLM judges whether the retrieved text covers the question, returning a validated schema indicating if information is sufficient, missing, or with a confidence score.
+        <div class="src"><b>S1</b> Complete_Project_Guide.pdf p.3 &nbsp; <b>S4</b> Complete_Project_Guide.pdf p.5 &nbsp; <b>S6</b> Complete_Project_Guide.pdf p.3</div>
+      </div>
+      <p>The loop behaved as designed. After round one the evaluator reported that the stopping logic was not explicitly covered, refine wrote targeted queries ("evidence sufficiency evaluation metrics", "agent stopping logic mechanisms"), and the second evaluation judged the evidence sufficient. All three citations point to the correct pages. A second traced run on a different question also completed in two rounds (280 s) with four verified citations.</p>
+
+      <h3>Effect of disabling hidden reasoning</h3>
+      <figure class="fig">
+        <div class="pair">
+          <div>
+            <span class="k">Output tokens, one short answer</span>
+            <div class="row"><span>thinking</span><span class="b" style="width:100%"></span><span class="v">824</span></div>
+            <div class="row after"><span>off</span><span class="b" style="width:5.34%"></span><span class="v">44</span></div>
+          </div>
+          <div>
+            <span class="k">Latency, same call</span>
+            <div class="row"><span>thinking</span><span class="b" style="width:100%"></span><span class="v">497 s</span></div>
+            <div class="row after"><span>off</span><span class="b" style="width:5.63%"></span><span class="v">28 s</span></div>
+          </div>
+        </div>
+        <figcaption>Fig. 4. One call each, qwen3.5:4b on CPU. The first call may also include model load time, so the latency ratio is an upper bound.</figcaption>
+      </figure>
+
+      <h3>Other observations</h3>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Check</th><th>Observed</th></tr></thead>
+          <tbody>
+            <tr><td>Extraction on the two project PDFs</td><td>21 pages, 81 chunks, no empty pages; median chunk 714 and 734 characters</td></tr>
+            <tr><td>Reranked hybrid search on a synthetic two-paper corpus</td><td>"how to fine-tune on a cheap GPU" ranked the adapter paper first (score 1.61 vs next &minus;9.96)</td></tr>
+            <tr><td>Persistence</td><td>Documents still listed after closing and reopening the on-disk store</td></tr>
+            <tr><td>Duplicate upload</td><td>Re-uploading the same file returned <code>duplicate: true</code> and created no new chunks</td></tr>
+            <tr><td>Test suite</td><td>44 passed, 1 skipped (the live injection test, which needs an explicit flag)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="evaluation">
+      <h2><span class="n">14</span>Evaluation plan</h2>
+      <p>The harness is complete and has been exercised in tests; it has not yet been run on a question set. It indexes a corpus into its own store, runs every system on the same questions, caches model outputs at temperature 0 so reruns give identical numbers, and reports means with bootstrap 95% confidence intervals.</p>
+      <div class="tbl wide">
+        <table>
+          <thead><tr><th>ID</th><th>System</th><th>Question it answers</th><th>Recall@5</th><th>Citation precision</th><th>Correct abstention</th><th>Latency</th></tr></thead>
+          <tbody>
+            <tr><td class="m">A</td><td>One-pass dense</td><td>Baseline</td><td class="tbd">pending</td><td class="tbd">pending</td><td class="tbd">pending</td><td class="tbd">pending</td></tr>
+            <tr><td class="m">B</td><td>One-pass hybrid</td><td>Does keyword search help?</td><td class="tbd">pending</td><td class="tbd">pending</td><td class="tbd">pending</td><td class="tbd">pending</td></tr>
+            <tr><td class="m">C</td><td>One-pass + rerank</td><td>Does reranking help?</td><td class="tbd">pending</td><td class="tbd">pending</td><td class="tbd">pending</td><td class="tbd">pending</td></tr>
+            <tr><td class="m">D</td><td>Multi-query, no evaluator</td><td>Is the loop needed, or only more queries?</td><td class="tbd">pending</td><td class="tbd">pending</td><td class="tbd">pending</td><td class="tbd">pending</td></tr>
+            <tr><td class="m">E</td><td>Agentic, dense</td><td>Does evidence-aware retrying help?</td><td class="tbd">pending</td><td class="tbd">pending</td><td class="tbd">pending</td><td class="tbd">pending</td></tr>
+            <tr><td class="m">F</td><td>Agentic + hybrid + rerank</td><td>Best combination, and at what cost?</td><td class="tbd">pending</td><td class="tbd">pending</td><td class="tbd">pending</td><td class="tbd">pending</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Method</h3>
+      <ul class="plain">
+        <li><strong>Gold set:</strong> 30 to 50 questions over 5 to 10 papers on one topic, mixing factual lookups, cross-paper comparisons, multi-evidence questions and questions whose answer is absent. Each answerable question records its supporting file and page. Questions are written and checked by hand so the answer key is not produced by the system under test.</li>
+        <li><strong>Held-out split:</strong> about a third of the questions are marked as test and never used for tuning.</li>
+        <li><strong>Metrics:</strong> recall@5 and context recall against gold pages, MRR, citation precision, correct abstention and false refusal (reported separately), latency, model calls, tokens and cost. An optional judge model, different from the answer model, scores faithfulness, relevance and correctness, and is spot-checked by hand on about 20 items.</li>
+        <li><strong>Reporting rule:</strong> results are published as measured, including negative ones. If one-pass hybrid retrieval with reranking matches the agent at a fraction of the latency, that is a finding.</li>
+      </ul>
+      <p>On this laptop the agent takes about 4 to 5 minutes per question and the one-pass systems 1 to 2 minutes, so the full comparison over 40 questions is an overnight run of roughly 10 to 12 hours. Cached outputs make every rerun free.</p>
+    </section>
+
+    <section id="limitations">
+      <h2><span class="n">15</span>Limitations</h2>
+      <div class="lims wide">
+        <div><span class="sev">Primary</span><b>No comparative results yet</b>Whether the agent beats simpler retrieval is unknown until the evaluation runs. No accuracy or improvement is claimed.</div>
+        <div><span class="sev">Primary</span><b>Slow on CPU</b>About 4 to 5 minutes per question with a 4B model and no GPU. Usable for research, not for interactive demos.</div>
+        <div><span class="sev">Primary</span><b>Citations are valid, not proven</b>Code guarantees each citation points to a retrieved passage, not that the passage supports the claim. Claim-level verification is not built yet.</div>
+        <div><span class="sev">Primary</span><b>The evaluator can be wrong</b>A small model decides sufficiency. It can stop early or waste a round; the limitation note covers the second case, not the first.</div>
+        <div><span class="sev">Moderate</span><b>Small context window</b>The local model's 4,096-token window forced the context down to 6 passages and 2 rounds, which limits multi-document answers.</div>
+        <div><span class="sev">Moderate</span><b>Text PDFs only</b>Scanned PDFs are rejected with a clear message. Tables, equations and two-column layouts extract imperfectly with pypdf.</div>
+        <div><span class="sev">Moderate</span><b>Heuristic cleaning</b>Header detection uses repetition, and cutting at "References" also removes any appendix after it. Both can be turned off.</div>
+        <div><span class="sev lo">Scope</span><b>In-process keyword index</b>Fine for hundreds of papers. A large corpus should move BM25 into Qdrant's native sparse vectors.</div>
+        <div><span class="sev lo">Scope</span><b>Single user, no memory</b>No authentication or multi-tenancy, and no follow-up questions. The embedded store also allows only one process at a time.</div>
+        <div><span class="sev lo">Scope</span><b>Viewer depends on the browser</b>Jumping to the cited page relies on the browser's PDF reader honouring the page fragment, which Chrome and Edge do.</div>
+      </div>
+    </section>
+
+    <section id="next">
+      <h2><span class="n">16</span>Next steps</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Priority</th><th>Work</th><th>Outcome</th></tr></thead>
+          <tbody>
+            <tr><td class="m">1</td><td>Build the gold question set on 5 to 10 papers and run systems A to F</td><td>The results table this report leaves open</td></tr>
+            <tr><td class="m">2</td><td>Failure analysis of the worst questions per system</td><td>Evidence for where the agent helps and where it does not</td></tr>
+            <tr><td class="m">3</td><td>Claim verification step that checks each claim against its passage</td><td>Moves citations from valid to supported</td></tr>
+            <tr><td class="m">4</td><td>GitHub Actions running tests and lint on every push</td><td>A visible, continuously checked build</td></tr>
+            <tr><td class="m">5</td><td>Deploy to Hugging Face Spaces with a hosted model</td><td>A public demo link next to the results</td></tr>
+            <tr><td class="m">6</td><td>Section-aware chunking and OCR for scanned PDFs</td><td>Better extraction on real papers</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      ResearchPilot technical report, v0.1, November 2026. All figures in this report come from runs of the code in the repository; none are estimates presented as measurements. Pinned versions: fastapi 0.165.0, langgraph 1.2.24, qdrant-client 1.20.0, sentence-transformers 6.3.0, openai 3.60.0, pypdf 7.1.1, streamlit 1.67.0, langsmith 0.16.2, torch 2.15.0.
+    </footer>
+  </main>
+</div>
+
+</body></html>
