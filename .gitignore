@@ -1,0 +1,11 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+data/
+evaluation/.qdrant/
+evaluation/cache/
+evaluation/questions.jsonl.bak
+.streamlit/secrets.toml

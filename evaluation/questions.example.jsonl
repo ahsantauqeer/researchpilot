@@ -1,0 +1,9 @@
+// Copy this file to evaluation/questions.jsonl and replace these EXAMPLES with questions about YOUR papers.
+// One JSON object per line. Lines starting with // are ignored.
+// Fields: id, question, type (factual | comparison | multi_evidence | unanswerable), answerable (true/false),
+//         expected_answer, evidence (list of {filename, page} with 1-based pages; required if answerable),
+//         split ("dev" for tuning, "test" = held out, never used for tuning).
+// Use `python scripts/inspect_pdf.py data/papers/<file>.pdf --grep "phrase"` to find the right page numbers.
+{"id": "q001", "question": "What problem does the paper in paper_a.pdf try to solve?", "type": "factual", "answerable": true, "expected_answer": "<write the answer from the paper>", "evidence": [{"filename": "paper_a.pdf", "page": 1}], "split": "dev"}
+{"id": "q002", "question": "Compare the memory requirements of the methods in paper_a.pdf and paper_b.pdf.", "type": "comparison", "answerable": true, "expected_answer": "<...>", "evidence": [{"filename": "paper_a.pdf", "page": 5}, {"filename": "paper_b.pdf", "page": 3}], "split": "dev"}
+{"id": "q003", "question": "What GPU price does paper_a.pdf report?", "type": "unanswerable", "answerable": false, "expected_answer": "Not in the documents.", "evidence": [], "split": "test"}

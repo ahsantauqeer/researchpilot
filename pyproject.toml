@@ -1,0 +1,19 @@
+[project]
+name = "researchpilot"
+version = "0.1.0"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning", "ignore::UserWarning"]
+
+[tool.ruff]
+line-length = 140
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008", "B905"]  # FastAPI's File(...) default; zip() over equal-length lists
+
+[tool.ruff.lint.per-file-ignores]
+"ui/*" = ["E501"]  # long CSS lines
