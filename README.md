@@ -81,10 +81,6 @@ abstention / false refusal, latency, LLM calls, tokens, cost; with `--judge` (a 
 faithfulness, answer relevance, correctness. All with bootstrap 95% CIs. LLM calls are cached
 (temperature 0), so re-runs give identical numbers.
 
-## Results
-
-_TBD — paste `summary.md` here after running the evaluation. Report negative results too._
-
 ## Layout
 
 ```
