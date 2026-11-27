@@ -8,8 +8,7 @@ not contain the answer.
 **Stack:** Python 3.11 · FastAPI · LangGraph · Qdrant (embedded) · Sentence Transformers · BM25 ·
 cross-encoder reranker · any OpenAI-compatible LLM · Streamlit
 
-> Status: implemented and unit-tested. **No evaluation results are claimed yet** — see
-> [Results](#results).
+> Status: implemented and unit-tested. 
 
 ## How it works
 
